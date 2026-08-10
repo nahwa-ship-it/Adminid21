@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rekap Bulanan — Laporan Nahwa</title>
+<link rel="stylesheet" href="style.css" />
+<style>body{visibility:hidden}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Admin & manager</span>
+      <h1>Rekap Bulanan</h1>
+    </div>
+    <a href="index.html" class="icon-link" title="Kembali ke laporan">←</a>
+  </header>
+
+  <div class="user-bar">
+    <span id="meEmail">—</span>
+    <button id="logoutBtn" class="link-btn">Keluar</button>
+  </div>
+
+  <section class="card">
+    <div class="field" style="border:none;padding-bottom:0;">
+      <label for="bulanPicker">Pilih bulan</label>
+      <input type="month" id="bulanPicker" />
+    </div>
+  </section>
+
+  <section class="summary-grid" id="summaryGrid">
+    <div class="summary-box">
+      <span class="summary-label">Omset Kotor</span>
+      <span class="summary-value" id="sumOmset">Rp 0</span>
+    </div>
+    <div class="summary-box">
+      <span class="summary-label">Total Pengeluaran</span>
+      <span class="summary-value bad" id="sumPengeluaran">Rp 0</span>
+    </div>
+    <div class="summary-box">
+      <span class="summary-label">— termasuk Belanja</span>
+      <span class="summary-value muted" id="sumBelanja">Rp 0</span>
+    </div>
+    <div class="summary-box highlight">
+      <span class="summary-label">Omset Bersih</span>
+      <span class="summary-value good" id="sumBersih">Rp 0</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">•</span> Rincian per hari</h2>
+    <div style="overflow-x:auto;">
+      <table class="user-table">
+        <thead>
+          <tr><th>Tanggal</th><th>Omset kotor</th><th>Belanja</th><th>Pengeluaran</th><th>Bersih</th><th>Oleh</th></tr>
+        </thead>
+        <tbody id="rekapTableBody">
+          <tr><td colspan="6" class="empty-hint">Memuat…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="auth-client.js"></script>
+<script>
+  function formatRp(n) {
+    return Math.round(Number(n) || 0).toLocaleString("id-ID");
+  }
+  function showToast(msg, isErr) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.toggle("err", !!isErr);
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3200);
+  }
+
+  async function loadRekap(yyyyMm) {
+    const [y, m] = yyyyMm.split("-").map(Number);
+    const start = new Date(y, m - 1, 1).toISOString();
+    const end = new Date(y, m, 1).toISOString(); // awal bulan berikutnya
+
+    const { data, error } = await supabaseClient
+      .from("riwayat_laporan")
+      .select("*")
+      .gte("created_at", start)
+      .lt("created_at", end)
+      .order("created_at", { ascending: true });
+
+    const tbody = document.getElementById("rekapTableBody");
+
+    if (error) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-hint">Gagal memuat data.</td></tr>`;
+      return;
+    }
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-hint">Belum ada laporan di bulan ini.</td></tr>`;
+      document.getElementById("sumOmset").textContent = "Rp 0";
+      document.getElementById("sumPengeluaran").textContent = "Rp 0";
+      document.getElementById("sumBelanja").textContent = "Rp 0";
+      document.getElementById("sumBersih").textContent = "Rp 0";
+      return;
+    }
+
+    let totalOmset = 0, totalPengeluaran = 0, totalBelanja = 0, totalBersih = 0;
+    tbody.innerHTML = data.map((r) => {
+      totalOmset += Number(r.total_omset) || 0;
+      totalPengeluaran += Number(r.total_pengeluaran) || 0;
+      totalBelanja += Number(r.total_belanja) || 0;
+      totalBersih += Number(r.omset_bersih) || 0;
+      return `
+        <tr>
+          <td>${r.tanggal || "—"}</td>
+          <td>Rp ${formatRp(r.total_omset)}</td>
+          <td>Rp ${formatRp(r.total_belanja)}</td>
+          <td>Rp ${formatRp(r.total_pengeluaran)}</td>
+          <td>Rp ${formatRp(r.omset_bersih)}</td>
+          <td>${r.submitted_by_email || "—"}</td>
+        </tr>`;
+    }).join("");
+
+    document.getElementById("sumOmset").textContent = "Rp " + formatRp(totalOmset);
+    document.getElementById("sumPengeluaran").textContent = "Rp " + formatRp(totalPengeluaran);
+    document.getElementById("sumBelanja").textContent = "Rp " + formatRp(totalBelanja);
+    document.getElementById("sumBersih").textContent = "Rp " + formatRp(totalBersih);
+  }
+
+  (async () => {
+    const session = await requireAuth();
+    if (!session) return;
+    const profile = await getMyProfile();
+    if (!isAdminOrManager(profile)) {
+      document.body.innerHTML = '<div style="padding:60px 20px;text-align:center;font-family:sans-serif;">Halaman ini khusus admin/manager.<br><a href="index.html">Kembali</a></div>';
+      document.body.style.visibility = "visible";
+      return;
+    }
+    document.getElementById("meEmail").textContent = profile.email;
+
+    const now = new Date();
+    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const picker = document.getElementById("bulanPicker");
+    picker.value = defaultMonth;
+    picker.addEventListener("change", () => {
+      if (picker.value) loadRekap(picker.value);
+    });
+
+    await loadRekap(defaultMonth);
+    document.body.style.visibility = "visible";
+  })();
+
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+</script>
+</body>
+</html>
