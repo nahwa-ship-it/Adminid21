@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Laporan Penjualan Nahwa</title>
+<link rel="stylesheet" href="style.css" />
+<style>body{visibility:hidden}</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Tutup kasir harian</span>
+      <h1>Laporan Nahwa</h1>
+    </div>
+    <button id="themeToggle" title="Ganti tema">☀️</button>
+  </header>
+
+  <div class="user-bar">
+    <span id="userEmail">—</span>
+    <a href="rekap-bulanan.html" id="rekapLink" class="link-btn" style="display:none;">Rekap Bulanan</a>
+    <a href="admin-users.html" id="adminLink" class="link-btn" style="display:none;">Kelola Staff</a>
+    <button id="logoutBtn" class="link-btn">Keluar</button>
+  </div>
+
+  <!-- ===== Input Angka ===== -->
+  <section class="card">
+    <h2><span class="num">01</span> Ringkasan Kas</h2>
+    <p class="hint">Modal awal untuk kas besok.</p>
+    <div class="field rp">
+      <label for="modal">Modal awal</label>
+      <input type="number" id="modal" placeholder="650000" inputmode="numeric" />
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">02</span> Penjualan</h2>
+    <p class="hint">Isi omset kotor per kategori.</p>
+    <div class="field rp"><label for="snack">Minuman & snack</label><input type="number" id="snack" inputmode="numeric" /></div>
+    <div class="field rp"><label for="bakso">Bakso</label><input type="number" id="bakso" inputmode="numeric" /></div>
+    <div class="field rp"><label for="titipan">Titipan</label><input type="number" id="titipan" inputmode="numeric" /></div>
+    <div class="field rp"><label for="rokok">Rokok</label><input type="number" id="rokok" inputmode="numeric" /></div>
+    <div class="field rp"><label for="sop">Sop</label><input type="number" id="sop" inputmode="numeric" /></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">03</span> Rincian Pembayaran</h2>
+    <p class="hint">Total ini harus sama dengan total penjualan di atas.</p>
+    <div class="field rp"><label for="qris">QRIS</label><input type="number" id="qris" inputmode="numeric" /></div>
+    <div class="field rp"><label for="tunai">Tunai</label><input type="number" id="tunai" inputmode="numeric" /></div>
+    <div class="field rp"><label for="edc">EDC BCA</label><input type="number" id="edc" inputmode="numeric" /></div>
+    <div class="field"><label for="hutang">Hutang</label><input type="text" id="hutang" placeholder="-" /></div>
+  </section>
+
+  <!-- ===== Belanja ===== -->
+  <section class="card">
+    <h2><span class="num">04</span> Belanja Barang</h2>
+    <div class="row-add">
+      <input type="text" id="belanjaNama" placeholder="Nama barang" />
+      <input type="number" class="harga" id="belanjaHarga" placeholder="Harga" inputmode="numeric" />
+      <button class="btn-add" id="addBelanja">+ Tambah</button>
+    </div>
+    <ul class="list-items" id="belanjaList"></ul>
+    <div class="total-line"><span>Total belanja</span><span id="totalBelanja">Rp 0</span></div>
+  </section>
+
+  <!-- ===== Stok habis ===== -->
+  <section class="card">
+    <h2><span class="num">05</span> Stok Habis</h2>
+    <div class="row-add">
+      <input type="text" id="stokEntry" placeholder="Nama stok yang habis" />
+      <button class="btn-add" id="addStok">+ Tambah</button>
+    </div>
+    <ul class="list-items" id="stokList"></ul>
+  </section>
+
+  <!-- ===== Nomor WA ===== -->
+  <section class="card wa-field">
+    <h2><span class="num">06</span> Nomor WhatsApp Tujuan</h2>
+    <p class="hint">Pesan akan dibuka di WhatsApp kamu, siap dikirim ke nomor ini.</p>
+    <input type="tel" id="nomorWa" placeholder="6282136953426" value="6282136953426" />
+  </section>
+
+  <!-- ===== Aksi ===== -->
+  <button class="btn-primary" id="hitungBtn">Hitung Laporan</button>
+
+  <div class="action-row">
+    <button class="wa" id="waBtn"><span class="ic">📲</span>Buka WhatsApp</button>
+    <button id="exportBtn"><span class="ic">💾</span>Export TXT</button>
+    <button id="riwayatBtn"><span class="ic">📜</span>Riwayat</button>
+  </div>
+
+  <!-- ===== Hasil laporan (struk) ===== -->
+  <div class="receipt-shell">
+    <div class="receipt" id="receiptOutput"></div>
+  </div>
+
+  <footer class="foot">Sistem Sukses Nahwa 💼</footer>
+</div>
+
+<!-- Modal Riwayat -->
+<div class="modal-overlay" id="riwayatOverlay">
+  <div class="modal-sheet">
+    <h2>Riwayat Laporan <button class="close-btn" id="closeRiwayat">✕</button></h2>
+    <div id="riwayatContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="auth-client.js"></script>
+<script>
+  (async () => {
+    const session = await requireAuth();
+    if (!session) return; // sudah di-redirect ke login.html
+    const profile = await getMyProfile();
+    document.getElementById("userEmail").textContent = profile?.email || session.user.email;
+    if (profile?.role === "admin") {
+      document.getElementById("adminLink").style.display = "inline-flex";
+    }
+    if (profile?.role === "admin" || profile?.role === "manager") {
+      document.getElementById("rekapLink").style.display = "inline-flex";
+    }
+    document.body.style.visibility = "visible";
+  })();
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+</script>
+<script src="app.js"></script>
+</body>
+</html>
