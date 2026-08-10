@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kelola Staff — Laporan Nahwa</title>
+<link rel="stylesheet" href="style.css" />
+<style>body{visibility:hidden}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Khusus admin</span>
+      <h1>Kelola Staff</h1>
+    </div>
+    <a href="index.html" class="icon-link" title="Kembali ke laporan">←</a>
+  </header>
+
+  <div class="user-bar">
+    <span id="adminEmail">—</span>
+    <button id="logoutBtn" class="link-btn">Keluar</button>
+  </div>
+
+  <section class="card">
+    <h2><span class="num">01</span> Siapa saja yang login</h2>
+    <p class="hint">Untuk menambah staff baru: buka Supabase Dashboard → Authentication → Add User.</p>
+    <table class="user-table">
+      <thead>
+        <tr><th>Email</th><th>Role</th><th>Terakhir login</th><th>Bergabung</th><th></th></tr>
+      </thead>
+      <tbody id="userTableBody">
+        <tr><td colspan="5" class="empty-hint">Memuat…</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="auth-client.js"></script>
+<script>
+  function showToast(msg, isErr) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.toggle("err", !!isErr);
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3200);
+  }
+
+  async function loadUsers() {
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    const tbody = document.getElementById("userTableBody");
+    if (error || !data) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-hint">Gagal memuat data.</td></tr>`;
+      return;
+    }
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-hint">Belum ada staff terdaftar.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map((u) => `
+      <tr>
+        <td>${u.email || "—"}</td>
+        <td><span class="role-badge ${u.role}">${u.role}</span></td>
+        <td>${u.last_login ? new Date(u.last_login).toLocaleString("id-ID") : "Belum pernah"}</td>
+        <td>${new Date(u.created_at).toLocaleDateString("id-ID")}</td>
+        <td>
+          <select class="role-select" data-id="${u.id}">
+            <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
+            <option value="manager" ${u.role === "manager" ? "selected" : ""}>manager</option>
+            <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
+          </select>
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll(".role-select").forEach((sel) => {
+      sel.addEventListener("change", async () => {
+        const id = sel.dataset.id;
+        const newRole = sel.value;
+        sel.disabled = true;
+        const { error } = await supabaseClient.from("profiles").update({ role: newRole }).eq("id", id);
+        if (error) {
+          showToast("Gagal ubah role: " + error.message, true);
+          sel.disabled = false;
+          return;
+        }
+        showToast("Role berhasil diubah");
+        loadUsers();
+      });
+    });
+  }
+
+  (async () => {
+    const session = await requireAuth();
+    if (!session) return;
+    const profile = await getMyProfile();
+    if (!profile || profile.role !== "admin") {
+      document.body.innerHTML = '<div style="padding:60px 20px;text-align:center;font-family:sans-serif;">Halaman ini khusus admin.<br><a href="index.html">Kembali</a></div>';
+      document.body.style.visibility = "visible";
+      return;
+    }
+    document.getElementById("adminEmail").textContent = profile.email;
+    await loadUsers();
+    document.body.style.visibility = "visible";
+  })();
+
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+</script>
+</body>
+</html>
