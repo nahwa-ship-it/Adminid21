@@ -461,6 +461,22 @@ footer.foot {
   min-height: 16px;
   margin: 0 0 10px;
 }
+.auth-success {
+  color: var(--good);
+  font-size: 12.5px;
+  margin: 0 0 10px;
+}
+.auth-switch {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 16px 0 0;
+}
+.auth-switch a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
 
 /* ---------- User bar (index & admin) ---------- */
 .user-bar {
@@ -589,3 +605,52 @@ input[type="month"] {
   font-size: 11.5px;
 }
 .role-badge.manager { background: #4a7fa8; color: #eaf3fa; }
+
+.rekap-table-wrap { overflow-x: auto; }
+
+/* ---------- Tabel jadi kartu di layar kecil (tidak perlu zoom) ---------- */
+.del-row-btn {
+  background: none;
+  border: none;
+  color: var(--bad);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+@media (max-width: 640px) {
+  .rekap-table-wrap { overflow-x: visible; }
+  table.user-table thead { display: none; }
+  table.user-table, 
+  table.user-table tbody, 
+  table.user-table tr, 
+  table.user-table td {
+    display: block;
+    width: 100%;
+  }
+  table.user-table tr {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  table.user-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border);
+    padding: 7px 0;
+    text-align: right;
+  }
+  table.user-table td:last-child { border-bottom: none; }
+  table.user-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+  table.user-table td[data-label=""]::before { content: none; }
+  table.user-table td[data-label=""] { justify-content: flex-end; }
+}
