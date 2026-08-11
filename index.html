@@ -32,26 +32,26 @@
     <p class="hint">Modal awal untuk kas besok.</p>
     <div class="field rp">
       <label for="modal">Modal awal</label>
-      <input type="number" id="modal" placeholder="650000" inputmode="numeric" />
+      <input type="text" inputmode="numeric" id="modal" placeholder="650000" class="rp-input" />
     </div>
   </section>
 
   <section class="card">
     <h2><span class="num">02</span> Penjualan</h2>
     <p class="hint">Isi omset kotor per kategori.</p>
-    <div class="field rp"><label for="snack">Minuman & snack</label><input type="number" id="snack" inputmode="numeric" /></div>
-    <div class="field rp"><label for="bakso">Bakso</label><input type="number" id="bakso" inputmode="numeric" /></div>
-    <div class="field rp"><label for="titipan">Titipan</label><input type="number" id="titipan" inputmode="numeric" /></div>
-    <div class="field rp"><label for="rokok">Rokok</label><input type="number" id="rokok" inputmode="numeric" /></div>
-    <div class="field rp"><label for="sop">Sop</label><input type="number" id="sop" inputmode="numeric" /></div>
+    <div class="field rp"><label for="snack">Minuman & snack</label><input type="text" inputmode="numeric" id="snack" class="rp-input" /></div>
+    <div class="field rp"><label for="bakso">Bakso</label><input type="text" inputmode="numeric" id="bakso" class="rp-input" /></div>
+    <div class="field rp"><label for="titipan">Titipan</label><input type="text" inputmode="numeric" id="titipan" class="rp-input" /></div>
+    <div class="field rp"><label for="rokok">Rokok</label><input type="text" inputmode="numeric" id="rokok" class="rp-input" /></div>
+    <div class="field rp"><label for="sop">Sop</label><input type="text" inputmode="numeric" id="sop" class="rp-input" /></div>
   </section>
 
   <section class="card">
     <h2><span class="num">03</span> Rincian Pembayaran</h2>
     <p class="hint">Total ini harus sama dengan total penjualan di atas.</p>
-    <div class="field rp"><label for="qris">QRIS</label><input type="number" id="qris" inputmode="numeric" /></div>
-    <div class="field rp"><label for="tunai">Tunai</label><input type="number" id="tunai" inputmode="numeric" /></div>
-    <div class="field rp"><label for="edc">EDC BCA</label><input type="number" id="edc" inputmode="numeric" /></div>
+    <div class="field rp"><label for="qris">QRIS</label><input type="text" inputmode="numeric" id="qris" class="rp-input" /></div>
+    <div class="field rp"><label for="tunai">Tunai</label><input type="text" inputmode="numeric" id="tunai" class="rp-input" /></div>
+    <div class="field rp"><label for="edc">EDC BCA</label><input type="text" inputmode="numeric" id="edc" class="rp-input" /></div>
     <div class="field"><label for="hutang">Hutang</label><input type="text" id="hutang" placeholder="-" /></div>
   </section>
 
@@ -60,7 +60,7 @@
     <h2><span class="num">04</span> Belanja Barang</h2>
     <div class="row-add">
       <input type="text" id="belanjaNama" placeholder="Nama barang" />
-      <input type="number" class="harga" id="belanjaHarga" placeholder="Harga" inputmode="numeric" />
+      <input type="text" inputmode="numeric" id="belanjaHarga" placeholder="Harga" class="harga rp-input" />
       <button class="btn-add" id="addBelanja">+ Tambah</button>
     </div>
     <ul class="list-items" id="belanjaList"></ul>
