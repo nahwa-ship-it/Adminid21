@@ -14,11 +14,23 @@ function formatRp(angka) {
 }
 
 function numVal(id, fallback = 0) {
-  const v = document.getElementById(id).value.trim();
+  const v = document.getElementById(id).value.trim().replace(/\./g, "");
   if (v === "") return fallback;
   const n = Number(v);
   return isNaN(n) ? fallback : n;
 }
+
+// ---------- Auto-format input Rupiah (titik jadi pemisah ribuan saat mengetik) ----------
+function formatRibuan(digitsOnly) {
+  if (!digitsOnly) return "";
+  return Number(digitsOnly).toLocaleString("id-ID");
+}
+document.querySelectorAll(".rp-input").forEach((el) => {
+  el.addEventListener("input", () => {
+    const digitsOnly = el.value.replace(/[^0-9]/g, "");
+    el.value = formatRibuan(digitsOnly);
+  });
+});
 
 // ---------- Tema ----------
 const themeToggle = document.getElementById("themeToggle");
@@ -78,9 +90,10 @@ function renderBelanja() {
 
 document.getElementById("addBelanja").addEventListener("click", () => {
   const nama = document.getElementById("belanjaNama").value.trim();
-  const harga = Number(document.getElementById("belanjaHarga").value);
+  const hargaRaw = document.getElementById("belanjaHarga").value.replace(/\./g, "");
+  const harga = Number(hargaRaw);
   if (!nama) return showToast("Masukkan nama barang", true);
-  if (!document.getElementById("belanjaHarga").value.trim() || isNaN(harga)) {
+  if (!hargaRaw || isNaN(harga)) {
     return showToast("Harga harus berupa angka", true);
   }
   belanjaItems.push({ nama, harga });
