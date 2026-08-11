@@ -26,7 +26,7 @@
   <section class="card">
     <h2><span class="num">01</span> Siapa saja yang login</h2>
     <p class="hint">Staff bisa daftar sendiri lewat halaman login (otomatis jadi role staff). Kamu tinggal atur role di tabel bawah kalau perlu.</p>
-    <table class="user-table">
+    <table class="user-table" id="staffTable">
       <thead>
         <tr><th>Email</th><th>Role</th><th>Terakhir login</th><th>Bergabung</th><th></th></tr>
       </thead>
@@ -68,11 +68,11 @@
     }
     tbody.innerHTML = data.map((u) => `
       <tr>
-        <td>${u.email || "—"}</td>
-        <td><span class="role-badge ${u.role}">${u.role}</span></td>
-        <td>${u.last_login ? new Date(u.last_login).toLocaleString("id-ID") : "Belum pernah"}</td>
-        <td>${new Date(u.created_at).toLocaleDateString("id-ID")}</td>
-        <td>
+        <td data-label="Email">${u.email || "—"}</td>
+        <td data-label="Role"><span class="role-badge ${u.role}">${u.role}</span></td>
+        <td data-label="Terakhir login">${u.last_login ? new Date(u.last_login).toLocaleString("id-ID") : "Belum pernah"}</td>
+        <td data-label="Bergabung">${new Date(u.created_at).toLocaleDateString("id-ID")}</td>
+        <td data-label="">
           <select class="role-select" data-id="${u.id}">
             <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
             <option value="manager" ${u.role === "manager" ? "selected" : ""}>manager</option>
