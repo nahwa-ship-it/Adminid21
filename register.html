@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daftar — Laporan Nahwa</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <span class="eyebrow">Sistem Sukses Nahwa</span>
+    <h1>Daftar Akun</h1>
+    <p class="hint">Akun baru otomatis jadi staff. Admin bisa ubah role kamu nanti kalau perlu.</p>
+
+    <form id="registerForm">
+      <div class="auth-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="username" />
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required autocomplete="new-password" minlength="6" />
+      </div>
+      <div class="auth-field">
+        <label for="password2">Ulangi Password</label>
+        <input type="password" id="password2" required autocomplete="new-password" minlength="6" />
+      </div>
+      <p class="auth-error" id="registerError"></p>
+      <p class="auth-success" id="registerSuccess"></p>
+      <button type="submit" class="btn-primary" id="registerBtn">Daftar</button>
+    </form>
+
+    <p class="auth-switch">Sudah punya akun? <a href="login.html">Masuk di sini</a></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script src="auth-client.js"></script>
+<script>
+  (async () => {
+    const session = await getSession();
+    if (session) window.location.href = "index.html";
+  })();
+
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const password2 = document.getElementById("password2").value;
+    const btn = document.getElementById("registerBtn");
+    const errEl = document.getElementById("registerError");
+    const okEl = document.getElementById("registerSuccess");
+    errEl.textContent = "";
+    okEl.textContent = "";
+
+    if (password.length < 6) {
+      errEl.textContent = "Password minimal 6 karakter.";
+      return;
+    }
+    if (password !== password2) {
+      errEl.textContent = "Password tidak sama.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Mendaftarkan…";
+
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+    if (error) {
+      errEl.textContent = error.message.includes("already registered")
+        ? "Email ini sudah terdaftar. Coba login."
+        : "Gagal daftar: " + error.message;
+      btn.disabled = false;
+      btn.textContent = "Daftar";
+      return;
+    }
+
+    // Kalau project Supabase butuh konfirmasi email, session belum ada di sini
+    if (!data.session) {
+      okEl.textContent = "Berhasil daftar! Cek email kamu untuk konfirmasi, lalu login.";
+      btn.disabled = false;
+      btn.textContent = "Daftar";
+      document.getElementById("registerForm").reset();
+      return;
+    }
+
+    await touchLastLogin();
+    window.location.href = "index.html";
+  });
+</script>
+</body>
+</html>
