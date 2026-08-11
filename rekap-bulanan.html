@@ -51,13 +51,13 @@
 
   <section class="card">
     <h2><span class="num">•</span> Rincian per hari</h2>
-    <div style="overflow-x:auto;">
-      <table class="user-table">
+    <div class="rekap-table-wrap">
+      <table class="user-table rekap-table" id="rekapTable">
         <thead>
-          <tr><th>Tanggal</th><th>Omset kotor</th><th>Belanja</th><th>Pengeluaran</th><th>Bersih</th><th>Oleh</th></tr>
+          <tr><th>Tanggal</th><th>Omset kotor</th><th>Belanja</th><th>Pengeluaran</th><th>Bersih</th><th>Oleh</th><th></th></tr>
         </thead>
         <tbody id="rekapTableBody">
-          <tr><td colspan="6" class="empty-hint">Memuat…</td></tr>
+          <tr><td colspan="7" class="empty-hint">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
@@ -81,6 +81,8 @@
     setTimeout(() => t.classList.remove("show"), 3200);
   }
 
+  let isAdminUser = false;
+
   async function loadRekap(yyyyMm) {
     const [y, m] = yyyyMm.split("-").map(Number);
     const start = new Date(y, m - 1, 1).toISOString();
@@ -96,11 +98,11 @@
     const tbody = document.getElementById("rekapTableBody");
 
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-hint">Gagal memuat data.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-hint">Gagal memuat data.</td></tr>`;
       return;
     }
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-hint">Belum ada laporan di bulan ini.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-hint">Belum ada laporan di bulan ini.</td></tr>`;
       document.getElementById("sumOmset").textContent = "Rp 0";
       document.getElementById("sumPengeluaran").textContent = "Rp 0";
       document.getElementById("sumBelanja").textContent = "Rp 0";
@@ -114,14 +116,18 @@
       totalPengeluaran += Number(r.total_pengeluaran) || 0;
       totalBelanja += Number(r.total_belanja) || 0;
       totalBersih += Number(r.omset_bersih) || 0;
+      const hapusCell = isAdminUser
+        ? `<button class="del-row-btn" data-id="${r.id}" title="Hapus laporan ini">✕</button>`
+        : "";
       return `
         <tr>
-          <td>${r.tanggal || "—"}</td>
-          <td>Rp ${formatRp(r.total_omset)}</td>
-          <td>Rp ${formatRp(r.total_belanja)}</td>
-          <td>Rp ${formatRp(r.total_pengeluaran)}</td>
-          <td>Rp ${formatRp(r.omset_bersih)}</td>
-          <td>${r.submitted_by_email || "—"}</td>
+          <td data-label="Tanggal">${r.tanggal || "—"}</td>
+          <td data-label="Omset kotor">Rp ${formatRp(r.total_omset)}</td>
+          <td data-label="Belanja">Rp ${formatRp(r.total_belanja)}</td>
+          <td data-label="Pengeluaran">Rp ${formatRp(r.total_pengeluaran)}</td>
+          <td data-label="Bersih">Rp ${formatRp(r.omset_bersih)}</td>
+          <td data-label="Oleh">${r.submitted_by_email || "—"}</td>
+          <td data-label="">${hapusCell}</td>
         </tr>`;
     }).join("");
 
@@ -129,6 +135,21 @@
     document.getElementById("sumPengeluaran").textContent = "Rp " + formatRp(totalPengeluaran);
     document.getElementById("sumBelanja").textContent = "Rp " + formatRp(totalBelanja);
     document.getElementById("sumBersih").textContent = "Rp " + formatRp(totalBersih);
+
+    tbody.querySelectorAll(".del-row-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Hapus laporan tanggal ini? Tidak bisa dibatalkan.")) return;
+        btn.disabled = true;
+        try {
+          await hapusRiwayat(btn.dataset.id);
+          showToast("Laporan berhasil dihapus");
+          loadRekap(document.getElementById("bulanPicker").value);
+        } catch (e) {
+          showToast("Gagal hapus (cek koneksi / izin admin)", true);
+          btn.disabled = false;
+        }
+      });
+    });
   }
 
   (async () => {
@@ -141,6 +162,7 @@
       return;
     }
     document.getElementById("meEmail").textContent = profile.email;
+    isAdminUser = profile.role === "admin";
 
     const now = new Date();
     const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
