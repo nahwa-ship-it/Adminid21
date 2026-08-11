@@ -42,3 +42,12 @@ async function ambilRiwayat(limit = 30) {
   }
   return data;
 }
+
+// Hapus satu laporan (RLS: cuma admin yang diizinkan Supabase-nya)
+async function hapusRiwayat(id) {
+  const { error } = await supabaseClient.from("riwayat_laporan").delete().eq("id", id);
+  if (error) {
+    console.error("Gagal hapus riwayat:", error);
+    throw error;
+  }
+}
